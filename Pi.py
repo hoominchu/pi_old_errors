@@ -1,3 +1,8 @@
+import requests, json, sys
+import datetime
+from fuzzywuzzy import fuzz
+from fuzzywuzzy import process
+
 import sys
 import time
 sys.path.append("/Library/Python/2.7/site-packages")
@@ -8,6 +13,99 @@ import random
 #from nltk.stem import PorterStemmer
 import serial
 
+sys.path.append("/Library/Python/2.7/site-packages")
+
+channelsDictSky = {}
+channelsDictSkyRev = {}
+showTimeDict = {}
+showTimeDictRev = {}
+channelsDict = {'starsports1':401, 'starsports2':406, 'sonymax':303, 'stargold':302, 'starmovies':342, 'starmoviesaction':355, 'indiatv':460, 'ET Now':525, 'Al Jazeera':533, 'mtv':655, 'Z ETC Bollywood':669, 'MTV indies':667, 'Discovery Science':561, 'hungama':605}
+channelsDictRev = {v: k for k, v in channelsDict.items()}
+timeList = []
+
+nowTime = datetime.datetime.now()
+nowTime = nowTime.replace(hour = 18, minute = 0)
+cNum = 107
+
+def getShowTime(showName):
+    
+    for item in showTimeDictRev.keys():
+        if (fuzz.partial_ratio(what,item) == 100) or (fuzz.token_sort_ratio(what,item) == 100) or (fuzz.token_set_ratio(what,item) == 100):
+            print (showTimeDictRev[item])
+            print (channelsDictSky[item])
+            print (channelsDictSkyRev[(channelsDictSky[item])])
+            print (channelsDictRev[channelsDictSky[item]])
+    #print(showTimeDict)
+
+for key in channelsDict.values():
+
+    #print(key)
+    
+    r = requests.get('http://www.tatasky.com/tvguiderv/readfiles.jsp?fileName=20151125/00'+str(key)+'_event.json')
+    j = r.json()
+    timeObject = datetime.datetime.now()
+
+
+    num = (len(j["eventList"]))
+
+    cid = j["cid"]
+    cid = int(cid)
+
+
+
+    for i in range(0,num):
+
+        showTitle = (j["eventList"][i]["et"])
+        showTime = (j["eventList"][i]["st"])
+        
+        channelsDictSky[showTitle] = cid
+        channelsDictSkyRev[cid] = showTitle
+        showTimeDict[showTime] = showTitle
+        showTimeDictRev[showTitle] = showTime
+
+        timeList.append(showTime)
+
+        #print (curC + ' ' + str(showTime) + '\n')
+
+#print(channelsDict)
+#print('\n')
+#print(showTimeDict)
+#print(showTimeDict)
+"""what = raw_input('What do you want to watch?\n')
+getShowTime(what)
+"""
+
+for obj in timeList:
+    #print(obj)
+    hourShowTime = obj[0:2]
+    minuteShowTime = obj[3:5]
+    showTimeX = timeObject.replace(hour = int(hourShowTime),minute = int(minuteShowTime), second = 0)
+    #print('Show starts at : ' + str(showTimeX))
+    #print('Now : ' + str(nowTime))
+    if (showTimeX <= nowTime):
+        #print('checking')
+        continue
+    else:
+        #print('done')
+        #print(obj)
+        ind = (timeList.index(obj))
+        if (ind>0):
+            useInd = ind-1
+        else:
+            useInd = 0
+        #print(showTimeDict[timeList[useInd]])
+        break
+#print(channelsDict)
+
+##for time, title in showTimeDict.items():
+##    if (title == what):
+##        print (time)
+##        break
+    
+
+#####################################################################################
+
+
 #devices = ["COM1","COM2","COM3","COM4","COM5","COM6","COM7","COM8","COM9","COM10"]
 """for port in devices:
     try:
@@ -17,7 +115,7 @@ import serial
     except:
         pass
 """
-arduino = serial.Serial("COM4",9600)
+#arduino = serial.Serial("COM4",9600)
 #ps = PorterStemmer()
 
 allCommands = []
@@ -104,25 +202,28 @@ def greetcheck(command):
                 return 1
             
     for word in wordsList:
-        #print (word)
         for keyWord in keyWords:
             if (word == keyWord):
                 print ('Please wait...\n')
                 action(word,command)
                 
-                return 2
-    #print (wordsList)    
+                return 2   
     print('I can\'t do that right now. But I will learn soon!\n')        
 
 def checkNextWord(keyWord, listName):
-    #print (listName)
     index = listName.index(keyWord)
     #indexNext = index + 1
+    
+    for item in listName:
+        if item in channelsDictSky.keys():
+            print(channelsDictSky.key())
+            return item
+
     if len(listName) > index+1:
         return listName[index+1]
     else:
         return len(listName)
-
+        
 def gotoNumber(channelNumber):
     channelNumberString = str(channelNumber)
     for digit in channelNumberString:
@@ -131,25 +232,22 @@ def gotoNumber(channelNumber):
         time.sleep(2.0)
 
 def commandNotClear(errorMessage):
-    #response = input(errorMessage)
-    response = getVoiceCommand(errorMessage)
+    response = input(errorMessage)
+    #response = getVoiceCommand(errorMessage)
     print(response)
     return response
 
 def isDeviceClear():
     global devices, command, tvKeyWords, theDevice
     commandWords = command.split()
-    #print(commandWords)
     for i in commandWords:
         for h in tvKeyWords:
             if (i == h):
-                #print (i)
                 return 'tv'
                
     for word in devices:
         for k in commandWords:
             if (word == k):
-                #print('K')
                 theDevice = word
                 return word
                 break
@@ -173,8 +271,7 @@ def isDeviceClear():
 
     
 def getChannelNumber(channelNameInput):
-    global guide, commandWords, channelsDict
-    #print (commandWords)
+    global guide, commandWords, channelsDict, channelsDictSky
     
     if channelNameInput in list(guide.keys()):
         channelsName= guide.get(channelNameInput, channelNameInput)
@@ -183,16 +280,18 @@ def getChannelNumber(channelNameInput):
         print ("Channel Number: " + str(channelNumber))
         gotoNumber(channelNumber)
 
+    if channelNameInput in list(channelsDictSky.keys()):
+        print (channelNameInput)
+
     else:
-        channelNumber = channelsDict.get(channelNameInput,"Can't find channel")
         print ("Channel Number: " + str(channelNumber))
         gotoNumber(channelNumber)
 
 def doIt():
 
     global keyWords, greetWords, wordsList, commandWords, command, theDevice, devices
-    command = getVoiceCommand('I am listening')
-    #command = input('Tell me\n')
+    #command = getVoiceCommand('I am listening')
+    command = raw_input('Tell me\n')
 
     #weKnowCommand = doWeKnowThisCommand(f)
 
@@ -340,17 +439,26 @@ def getChannelName():
     global guide,commandWords
     print (guide.keys())
     for word in commandWords:
-        if word in list(guide.keys()):
+        if word in list(guide.keys()) or word in list(channelsDict.keys()):
             print (word)
             print('here')
             return word
+            
         else:
             return ('notInDict')
+
+def checkWordInDict():
+    for key in channelsDictSky:
+        keylower = key.lower()
+        if keylower in command:
+            channelNumber = channelsDictSky.get(key)
+            break
+    print('Putting on channel number : ' + str(channelNumber))
+    return key
 
         
 def action(keyWord,command):
     global theDevice,commandWords
-    #print (command)
     if (theDevice == 'tv'):
         number = text2int (command, numwords={})
         if (keyWord == 'nextchannel'):
@@ -367,17 +475,15 @@ def action(keyWord,command):
                 
                 arduino.write('SKY_CH_DOWN'.encode())
         if (keyWord == 'goto'):
-            #print(number)
             if (number == 0):
-                channelNameInput = checkNextWord(keyWord,command.split())
+                channelNameInput =  checkWordInDict() #checkNextWord(keyWord,command.split())
                 getChannelNumber(channelNameInput)
-                #print (channelName)
                 channelName = channelNameInput
                 if (channelName != 'notInDict'):
-                    print('Putting on ' + str(channelName))
+                    #print('Putting on ' + str(channelName))
                     return
                 else:
-                    response = commandNotClear('Please tell a number or the name of a channel\n')
+                    response = commandNotClear('Please say a number or the name of a channel\n')
                     number = text2int (response, numwords={})
                     if (number == 0):
                         print('Go to channel ' + response)
@@ -550,6 +656,8 @@ f.close()
 f = open('commandList.txt','r')
 
 while (flag == 0):
+    doIt()
+    """
     activateWord = getVoiceCommand('Hi I am Pi. And my nickname is Adam. Say Pi or Adam to activate me. ')
     #activateWord = input('Hi, I am Pi. Say pi to activate me\n')
     activateWord = activateWord.lower()
@@ -559,8 +667,7 @@ while (flag == 0):
         #flag = 1
     else:
         continue
-
-
+    """
 
 f.close()
     
