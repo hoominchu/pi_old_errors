@@ -8,7 +8,7 @@ allChannels = {'starsports1':401, 'starsports2':406, 'sonymax':303, 'stargold':3
 
 timeList = []
 
-whichChannel = input('Which channel?\n')
+whichChannel = raw_input('Which channel?\n')
 
 
 nowTime = datetime.datetime.now()
@@ -20,7 +20,7 @@ cNum = allChannels[whichChannel]
 
 #print(key)
 
-r = requests.get('http://www.tatasky.com/tvguiderv/readfiles.jsp?fileName=20151123/00'+str(cNum)+'_event.json')
+r = requests.get('http://www.tatasky.com/tvguiderv/readfiles.jsp?fileName=20151202/00'+str(cNum)+'_event.json')
 j = r.json()
 timeObject = datetime.datetime.now()
 
@@ -50,7 +50,7 @@ for i in range(0,num):
 #print(channelsDict)
 #print('\n')
 #print(showTimeDict)
-#print(showTimeDict)
+print(showTimeDict)
 #what = input('What do you want to watch?\n')
 #print (channelsDict[what])
 #print (showTimeDictRev[what])

@@ -30,18 +30,18 @@ cNum = 107
 def getShowTime(showName):
     
     for item in showTimeDictRev.keys():
-        if (fuzz.partial_ratio(what,item) == 100) or (fuzz.token_sort_ratio(what,item) == 100) or (fuzz.token_set_ratio(what,item) == 100):
+        if (fuzz.partial_ratio(showName,item) == 100) or (fuzz.token_sort_ratio(showName,item) == 100) or (fuzz.token_set_ratio(showName,item) == 100):
             print (showTimeDictRev[item])
-            print (channelsDictSky[item])
-            print (channelsDictSkyRev[(channelsDictSky[item])])
-            print (channelsDictRev[channelsDictSky[item]])
+            #print (channelsDictSky[item])
+            #print (channelsDictSkyRev[(channelsDictSky[item])])
+            #print (channelsDictRev[channelsDictSky[item]])
     #print(showTimeDict)
 
 for key in channelsDict.values():
 
     #print(key)
     
-    r = requests.get('http://www.tatasky.com/tvguiderv/readfiles.jsp?fileName=20151125/00'+str(key)+'_event.json')
+    r = requests.get('http://www.tatasky.com/tvguiderv/readfiles.jsp?fileName=20151202/00'+str(key)+'_event.json')
     j = r.json()
     timeObject = datetime.datetime.now()
 
@@ -477,6 +477,8 @@ def action(keyWord,command):
         if (keyWord == 'goto'):
             if (number == 0):
                 channelNameInput =  checkWordInDict() #checkNextWord(keyWord,command.split())
+                #print(channelNameInput)
+                getShowTime(channelNameInput)
                 getChannelNumber(channelNameInput)
                 channelName = channelNameInput
                 if (channelName != 'notInDict'):
@@ -668,6 +670,6 @@ while (flag == 0):
     else:
         continue
     """
-
+    #print(channelsDictSky)
 f.close()
     
