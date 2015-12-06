@@ -31,7 +31,7 @@ for key in allChannels.values():
 
     #print(key)
     
-    r = requests.get('http://www.tatasky.com/tvguiderv/readfiles.jsp?fileName=20151125/00'+str(key)+'_event.json')
+    r = requests.get('http://www.tatasky.com/tvguiderv/readfiles.jsp?fileName=20151205/00'+str(key)+'_event.json')
     j = r.json()
     timeObject = datetime.datetime.now()
 
@@ -61,9 +61,10 @@ for key in allChannels.values():
 #print('\n')
 #print(showTimeDict)
 #print(showTimeDict)
-"""what = raw_input('What do you want to watch?\n')
+what = raw_input('What do you want to watch?\n')
 getShowTime(what)
-"""
+
+print (showTimeDict)
 
 for obj in timeList:
     #print(obj)

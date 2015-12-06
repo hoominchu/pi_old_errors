@@ -1,7 +1,8 @@
-import requests, json, sys
+import requests, json, sys, glob
 import datetime
 from fuzzywuzzy import fuzz
 from fuzzywuzzy import process
+from datetime import timedelta
 
 import sys
 import time
@@ -19,13 +20,92 @@ channelsDictSky = {}
 channelsDictSkyRev = {}
 showTimeDict = {}
 showTimeDictRev = {}
-channelsDict = {'starsports1':401, 'starsports2':406, 'sonymax':303, 'stargold':302, 'starmovies':342, 'starmoviesaction':355, 'indiatv':460, 'ET Now':525, 'Al Jazeera':533, 'mtv':655, 'Z ETC Bollywood':669, 'MTV indies':667, 'Discovery Science':561, 'hungama':605}
+channelsDict = {'starsports1':401, 'sonymax':303, 'stargold':302, 'starmovies':342, 'starmoviesaction':355, 'Al Jazeera':533, 'Z ETC Bollywood':669, 'Discovery Science':561, 'Star Plus HD':105, 'Star Plus': 106, 'DD National':104}
 channelsDictRev = {v: k for k, v in channelsDict.items()}
 timeList = []
 
 nowTime = datetime.datetime.now()
 nowTime = nowTime.replace(hour = 18, minute = 0)
+rightNow = datetime.datetime.now()
 cNum = 107
+
+def checkIfPlayingNow(showName, channelNumber):
+    timeObject = datetime.datetime.now()
+    with open('JSON/today/00'+str(channelNumber)+'_event.json') as data_file:    
+        data = json.load(data_file)
+        cid = (data["cid"])
+        cid = int(cid)
+        num = (len(data["eventList"]))
+
+        for i in range(0,num):
+
+            showTitle = (data["eventList"][i]["et"])
+            showTime = (data["eventList"][i]["st"])
+            showDuration = (data["eventList"][i]["ed"])
+            if (showName == showTitle):
+                hourShowTime = showTime[0:2]
+                minuteShowTime = showTime[3:5]
+                showTimeX = timeObject.replace(hour = int(hourShowTime),minute = int(minuteShowTime), second = 0)
+                rightNow = datetime.datetime.now()
+                rightNow = rightNow.replace(second = 0)
+                duration = (timedelta(minutes=int(showDuration)))
+                #print('right now')
+                #print(rightNow)
+                print('Show Title')
+                print(showTitle)
+                print('Show Time')
+                print(showTime)
+                #print('Show Time TimeObject')
+                #print(showTimeX)
+                print('Duration from JSON')
+                print(showDuration)
+                #print('Duration days')
+                #print(duration.days)
+                timeDiff = rightNow-showTimeX
+                #print('Difference')
+                #print(timeDiff)
+                #print('Duration calculated')
+                #print(duration)
+                if (timeDiff < duration) and timeDiff.days >= 0:
+                    #print('cool')
+                    return True
+                else:
+                    #print('not cool')
+                    return False
+
+tempList = [401,303,302,342,355,533,669,561,105,106,104]
+playingNow = {}
+
+def whatIsPlayingNow():
+    #for name, channelNumber in channelsDict.items():
+    for channelNumber in tempList:
+        #print(channelNumber)
+        with open('JSON/00'+str(channelNumber)+'_event.json') as data_file:    
+            data = json.load(data_file)
+            cid = (data["cid"])
+            cid = int(cid)
+            num = (len(data["eventList"]))
+
+            for i in range(0,num):
+
+                showTitle = (data["eventList"][i]["et"])
+                showTime = (data["eventList"][i]["st"])
+                showDuration = (data["eventList"][i]["ed"])
+                
+                hourShowTime = showTime[0:2]
+                minuteShowTime = showTime[3:5]
+                showTimeX = timeObject.replace(hour = int(hourShowTime),minute = int(minuteShowTime), second = 0)
+                rightNow = datetime.datetime.now()
+                rightNow = rightNow.replace(second = 0)
+                duration = (timedelta(minutes=int(showDuration)))
+                timeDiff = rightNow-showTimeX
+                if (timeDiff < duration) and timeDiff.days >= 0:
+                    playingNow[showTitle] = cid
+                    #print(showTitle)
+                else:
+                    continue
+
+
 
 def getShowTime(showName):
     
@@ -38,32 +118,27 @@ def getShowTime(showName):
     #print(showTimeDict)
 
 for key in channelsDict.values():
-
-    #print(key)
     
-    r = requests.get('http://www.tatasky.com/tvguiderv/readfiles.jsp?fileName=20151202/00'+str(key)+'_event.json')
-    j = r.json()
-    timeObject = datetime.datetime.now()
+    with open('JSON/00'+str(key)+'_event.json') as data_file:
+        j = json.load(data_file)
+        timeObject = datetime.datetime.now()
 
+        num = (len(j["eventList"]))
 
-    num = (len(j["eventList"]))
+        cid = j["cid"]
+        cid = int(cid)
 
-    cid = j["cid"]
-    cid = int(cid)
+        for i in range(0,num):
 
+            showTitle = (j["eventList"][i]["et"])
+            showTime = (j["eventList"][i]["st"])
+            
+            channelsDictSky[showTitle] = cid
+            channelsDictSkyRev[cid] = showTitle
+            showTimeDict[showTime] = showTitle
+            showTimeDictRev[showTitle] = showTime
 
-
-    for i in range(0,num):
-
-        showTitle = (j["eventList"][i]["et"])
-        showTime = (j["eventList"][i]["st"])
-        
-        channelsDictSky[showTitle] = cid
-        channelsDictSkyRev[cid] = showTitle
-        showTimeDict[showTime] = showTitle
-        showTimeDictRev[showTitle] = showTime
-
-        timeList.append(showTime)
+            timeList.append(showTime)
 
         #print (curC + ' ' + str(showTime) + '\n')
 
@@ -133,7 +208,7 @@ endWords = ['bye']
 negativeWords = ['dont']
 
 guide = {'wimbledon':'starsports1',  'tennis':'starsports1', 'football':'starsports2', 'hindimovie':'sonymax', 'movie':'stargold', 'englishmovie':'starmovies', 'actionmovie':'starmoviesaction', 'news':'indiatv', 'businessnews':'ET Now','internationalnews':'Al Jazeera', 'music':'MTV', 'bollywoodmusic': 'Z ETC Bollywood', 'indiemusic':'MTV indies', 'science':'Discovery Science','cartoon':'hungama'}
-channelsDict = {'channelName':'number', 'starsports1':401, 'starsports2':406, 'sonymax':303, 'stargold':302, 'starmovies':342, 'starmoviesaction':355, 'indiatv':460, 'ET Now':525, 'Al Jazeera':533, 'mtv':655, 'Z ETC Bollywood':669, 'MTV indies':667, 'Discovery Science':561, 'hungama':605, 'discovery':100}
+channelsDict = {'channelName':'number', 'starsports1':401, 'starsports2':406, 'sonymax':303, 'stargold':302, 'starmovies':342, 'starmoviesaction':355, 'indiatv':460, 'ET Now':525, 'Al Jazeera':533, 'mtv':655, 'Z ETC Bollywood':669, 'MTV indies':667, 'Discovery Science':561}
 
 #channelsList = ['starsports','espn','smax','stargold','starmovies','moviesnow']
 
@@ -185,9 +260,9 @@ def negCheck():
     for commandWord in commandWords:
         for negativeWord in negativeWords:
             if commandWord == negativeWord:
-                return True
+                return 1
             else:
-                return False
+                return 2
 
 def greetcheck(command):
     global userName
@@ -232,7 +307,7 @@ def gotoNumber(channelNumber):
         time.sleep(2.0)
 
 def commandNotClear(errorMessage):
-    response = input(errorMessage)
+    response = raw_input(errorMessage)
     #response = getVoiceCommand(errorMessage)
     print(response)
     return response
@@ -289,13 +364,15 @@ def getChannelNumber(channelNameInput):
 
 def doIt():
 
-    global keyWords, greetWords, wordsList, commandWords, command, theDevice, devices
+    global keyWords, greetWords, wordsList, commandWords, command, theDevice, devices, commandOriginal
     #command = getVoiceCommand('I am listening')
-    command = raw_input('Tell me\n')
+    commandOriginal = raw_input('Tell me\n')
 
     #weKnowCommand = doWeKnowThisCommand(f)
 
-    command = command.lower()
+    commandOriginal = commandOriginal.lower()
+
+    command = commandOriginal.lower()
 
     command = command.replace('tata sky','settopbox')
     command = command.replace('tatasky','settopbox')
@@ -447,18 +524,23 @@ def getChannelName():
         else:
             return ('notInDict')
 
-def checkWordInDict():
-    for key in channelsDictSky:
+def checkWordInDict(dictionaryName):
+    global commandOriginal
+    #print(dictionaryName)
+    for key in dictionaryName.keys():
         keylower = key.lower()
-        if keylower in command:
-            channelNumber = channelsDictSky.get(key)
-            break
-    print('Putting on channel number : ' + str(channelNumber))
-    return key
+        #print(key)
+        if keylower in commandOriginal:
+            return key
+        else:
+            continue
+    
+    
 
         
 def action(keyWord,command):
-    global theDevice,commandWords
+    global theDevice,commandWords, playingNow, channelsDict
+    flag = 0
     if (theDevice == 'tv'):
         number = text2int (command, numwords={})
         if (keyWord == 'nextchannel'):
@@ -476,21 +558,40 @@ def action(keyWord,command):
                 arduino.write('SKY_CH_DOWN'.encode())
         if (keyWord == 'goto'):
             if (number == 0):
-                channelNameInput =  checkWordInDict() #checkNextWord(keyWord,command.split())
-                #print(channelNameInput)
-                getShowTime(channelNameInput)
-                getChannelNumber(channelNameInput)
-                channelName = channelNameInput
-                if (channelName != 'notInDict'):
-                    #print('Putting on ' + str(channelName))
-                    return
+                dest = checkWordInDict(channelsDict)
+                #print(channelsDict[dest])
+                
+                #check if it is a channel name
+                try:
+                    print(channelsDict[dest])
+                    flag = 1
+                except:
+                    try:
+                        dest = checkWordInDict(playingNow)
+                        print(playingNow[dest])
+                        flag = 1
+                    except:
+                        try:
+                            dest = checkWordInDict(channelsDictSky)
+                            print (channelsDictSky[dest]+' is not playing right now')
+                        except:
+                            print ('There is no such program today')
+                
+                
+                #check if it is a program name
+                
                 else:
-                    response = commandNotClear('Please say a number or the name of a channel\n')
-                    number = text2int (response, numwords={})
-                    if (number == 0):
-                        print('Go to channel ' + response)
-                    else:
-                        print('Go to channel ' + str(number))
+                    if flag == 0:
+                        response = commandNotClear('Please say a number or the name of a channel\n')
+                        number = text2int (response, numwords={})
+                        if (number == 0):
+                            print('Go to channel ' + response)
+                        else:
+                            print('Go to channel ' + str(number))
+
+            else:
+                print ('Going to ' + str(number))
+                #gotoNumber(number)
             #Add action for commands with channel names. Right now this works only for numbers.
 
         if (keyWord == 'turnon'):
@@ -657,7 +758,14 @@ f.close()
 
 f = open('commandList.txt','r')
 
+whatIsPlayingNow()
+
 while (flag == 0):
+    #print(channelsDictSky)
+    print('Here are the things playing right now')
+    for key in playingNow.keys():
+        print (key)
+
     doIt()
     """
     activateWord = getVoiceCommand('Hi I am Pi. And my nickname is Adam. Say Pi or Adam to activate me. ')
@@ -670,6 +778,6 @@ while (flag == 0):
     else:
         continue
     """
-    #print(channelsDictSky)
+    
 f.close()
     
